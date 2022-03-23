@@ -1748,6 +1748,14 @@ ultra/pipeline:
   - modules/ultra/pipeline/**
   - tests/modules/ultra/pipeline/**
 
+umitools/dedup:
+  - modules/umitools/pipeline/**
+  - tests/modules/umitools/pipeline/**
+
+umitools/extract:
+  - modules/umitools/extract/**
+  - tests/modules/umitools/extract/**
+
 unicycler:
   - modules/unicycler/**
   - tests/modules/unicycler/**

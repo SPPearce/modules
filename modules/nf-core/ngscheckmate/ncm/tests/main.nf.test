@@ -1,0 +1,68 @@
+// TODO nf-core: Once you have added the required tests, please run the following command to build this file:
+// nf-core modules test ngscheckmate/ncm
+nextflow_process {
+
+    name "Test Process NGSCHECKMATE_NCM"
+    script "../main.nf"
+    config "./bam.config"
+    process "NGSCHECKMATE_NCM"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "ngscheckmate"
+    tag "ngscheckmate/ncm"
+
+    test("sarscov2 - bam") {
+
+        setup {
+            run("BEDTOOLS_MAKEWINDOWS") {
+                script "../../../bedtools/makewindows/main.nf"
+                config "./makewindows.config"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'test' ],
+                        file(params.test_data['sarscov2']['genome']['test_bed'], checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+        }
+
+        when {
+
+            process {
+                """
+                input[0] = [ [ id: 'combined_bams' ],
+                    [file(params.test_data['sarscov2']['illumina']['test_paired_end_sorted_bam']               , checkIfExists: true ),
+                     file(params.test_data['sarscov2']['illumina']['test_paired_end_sorted_bam_bai']           , checkIfExists: true ),
+                     file(params.test_data['sarscov2']['illumina']['test_paired_end_methylated_sorted_bam']    , checkIfExists: true ),
+                     file(params.test_data['sarscov2']['illumina']['test_paired_end_methylated_sorted_bam_bai'], checkIfExists: true )
+                    ]
+                ]
+                input[1] = BEDTOOLS_MAKEWINDOWS.out.bed
+                input[2] = [ [ id:'sarscov2' ],
+                            file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.corr_matrix.get(0).get(1).findAll().match()) },
+                { assert file(process.out.matched.get(0).get(1).findAll().match()) },
+                { assert file(process.out.all.get(0).get(1).findAll().match()) },
+                { assert file(process.out.pdf.get(0).get(1).find {
+                    file(it).name == "combined_bams.pdf" }).exists() },
+                { assert file(process.out.vcf.get(0).get(1).find {
+                    file(it).name == "test.paired_end.methylated.sorted.vcf" }).exists() },
+                { assert file(process.out.vcf.get(0).get(1).find {
+                    file(it).name == "test.paired_end.sorted.vcf" }).exists() },
+                { assert snapshot(process.out.versions).match("versions") }
+            )
+        }
+
+    }
+
+}
